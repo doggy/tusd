@@ -156,7 +156,8 @@ func (h *Handler) patchFile(w http.ResponseWriter, r *http.Request, id string) {
 
 	// @TODO Test offset < current offset
 
-	err = h.store.WriteFileChunk(id, offset, r.Body)
+	info.Offset = offset;
+	err = h.store.WriteFileChunk(id, info, r.Body)
 	if err != nil {
 		// @TODO handle 404 properly (goes for all h.err calls)
 		h.err(err, w, http.StatusInternalServerError)

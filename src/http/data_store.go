@@ -63,22 +63,22 @@ func (s *dataStore) CreateFile(id string, finalLength int64, meta map[string]str
 	return s.writeInfo(id, FileInfo{FinalLength: finalLength, Meta: meta})
 }
 
-func (s *dataStore) WriteFileChunk(id string, offset int64, src io.Reader) error {
+func (s *dataStore) WriteFileChunk(id string, info FileInfo, src io.Reader) error {
 	file, err := os.OpenFile(s.filePath(id), os.O_WRONLY, defaultFilePerm)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	if n, err := file.Seek(offset, os.SEEK_SET); err != nil {
+	if n, err := file.Seek(info.Offset, os.SEEK_SET); err != nil {
 		return err
-	} else if n != offset {
+	} else if n != info.Offset {
 		return errors.New("WriteFileChunk: seek failure")
 	}
 
-	n, err := io.Copy(file, src)
+	n, err := io.CopyN(file, src, info.FinalLength-info.Offset)
 	if n > 0 {
-		if err := s.setOffset(id, offset+n); err != nil {
+		if err := s.setOffset(id, info.Offset+n); err != nil {
 			return err
 		}
 	}
